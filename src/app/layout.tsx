@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Inter } from 'next/font/google'
 
 import { Analytics } from '@vercel/analytics/react'
 
+import { ThemeProvider } from '@/components/theme-provider'
+
 import '@/styles/globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
@@ -28,12 +30,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang='en' className={inter.variable}>
+    <html lang='en' className={inter.variable} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Analytics />
+        <ThemeProvider>
+          {children}
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   )
