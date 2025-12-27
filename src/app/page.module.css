@@ -1,0 +1,27 @@
+@keyframes wave {
+  0% {
+    transform: rotate(0deg);
+  }
+  7% {
+    transform: rotate(14deg);
+  }
+  12% {
+    transform: rotate(-8deg);
+  }
+  17% {
+    transform: rotate(12deg);
+  }
+  22% {
+    transform: rotate(-4deg);
+  }
+  27%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.waveHand {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: wave 3s ease-in-out infinite;
+}

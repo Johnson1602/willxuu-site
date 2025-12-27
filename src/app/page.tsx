@@ -1,10 +1,11 @@
 import { ArrowUpRight } from 'lucide-react'
+import styles from './page.module.css'
 
 export default function Page() {
   return (
     <div className='min-h-screen flex flex-col items-center justify-center'>
       <div className='flex flex-col font-medium max-w-xl gap-y-2 md:gap-y-4 px-6'>
-        <p>Hi, I&apos;m Weiyi 👋</p>
+        <p>Hi, I&apos;m Weiyi <span className={styles.waveHand}>👋</span></p>
         <p>
           I&apos;m a frontend developer at{' '}
           <a
