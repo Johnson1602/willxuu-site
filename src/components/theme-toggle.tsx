@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import posthog from 'posthog-js'
 
 import { Button } from '@/components/ui/button'
 
@@ -16,7 +17,12 @@ export function ThemeToggle() {
   }, [])
 
   const handleToggle = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    posthog.capture('toggled_theme', {
+      previous_theme: resolvedTheme,
+      new_theme: newTheme,
+    })
   }
 
   if (!mounted) {

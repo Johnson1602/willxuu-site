@@ -1,7 +1,17 @@
+'use client'
+
 import { ArrowUpRight } from 'lucide-react'
+import posthog from 'posthog-js'
 import styles from './page.module.css'
 
 export default function Page() {
+  const handleExternalLinkClick = (linkName: string, url: string) => {
+    posthog.capture('clicked_external_link', {
+      link_name: linkName,
+      link_url: url,
+    })
+  }
+
   return (
     <div className='min-h-screen flex flex-col items-center justify-center'>
       <div className='flex flex-col font-medium max-w-xl gap-y-2 md:gap-y-4 px-6'>
@@ -12,6 +22,7 @@ export default function Page() {
             href='https://www.mi.com/global/'
             target='_blank'
             className='inline-flex items-center underline'
+            onClick={() => handleExternalLinkClick('Xiaomi', 'https://www.mi.com/global/')}
           >
             Xiaomi <ArrowUpRight size={16} />
           </a>
@@ -23,6 +34,7 @@ export default function Page() {
             href='https://github.com/Johnson1602'
             target='_blank'
             className='inline-flex items-center underline'
+            onClick={() => handleExternalLinkClick('GitHub', 'https://github.com/Johnson1602')}
           >
             GitHub <ArrowUpRight size={16} />
           </a>{' '}
@@ -31,6 +43,7 @@ export default function Page() {
             href='https://x.com/willxuu_'
             target='_blank'
             className='inline-flex items-center underline'
+            onClick={() => handleExternalLinkClick('X', 'https://x.com/willxuu_')}
           >
             X <ArrowUpRight size={16} />
           </a>
