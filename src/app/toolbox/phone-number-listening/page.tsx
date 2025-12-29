@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Check, X, ArrowLeft, Volume2 } from 'lucide-react'
+import { Check, X, ArrowLeft, Volume2, Minus, Plus, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,9 @@ function generatePhoneNumber(): string {
   return digits.join('')
 }
 
-function speakPhoneNumber(phoneNumber: string) {
+const BASE_RATE = 0.7
+
+function speakPhoneNumber(phoneNumber: string, speedMultiplier: number) {
   // Cancel any ongoing speech
   speechSynthesis.cancel()
 
@@ -21,7 +23,7 @@ function speakPhoneNumber(phoneNumber: string) {
   const spacedDigits = phoneNumber.split('').join(' ')
 
   const utterance = new SpeechSynthesisUtterance(spacedDigits)
-  utterance.rate = 0.7 // Slower for listening practice
+  utterance.rate = BASE_RATE * speedMultiplier
   utterance.lang = 'en-US'
   speechSynthesis.speak(utterance)
 }
@@ -39,6 +41,7 @@ export default function PhoneNumberListeningPage() {
   const [generatedNumber, setGeneratedNumber] = useState<string | null>(null)
   const [userInput, setUserInput] = useState('')
   const [gameState, setGameState] = useState<GameState>('idle')
+  const [speed, setSpeed] = useState(1.0)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const digitsOnly = userInput.replace(/\D/g, '')
@@ -52,15 +55,27 @@ export default function PhoneNumberListeningPage() {
     inputRef.current?.focus()
     // 1 second delay before reading
     setTimeout(() => {
-      speakPhoneNumber(number)
+      speakPhoneNumber(number, speed)
     }, 1000)
   }
 
   const handleReplay = () => {
     if (generatedNumber) {
-      speakPhoneNumber(generatedNumber)
+      speakPhoneNumber(generatedNumber, speed)
       inputRef.current?.focus()
     }
+  }
+
+  const handleSpeedDown = () => {
+    setSpeed((s) => Math.max(0.1, Math.round((s - 0.1) * 10) / 10))
+  }
+
+  const handleSpeedUp = () => {
+    setSpeed((s) => Math.min(2.0, Math.round((s + 0.1) * 10) / 10))
+  }
+
+  const handleSpeedReset = () => {
+    setSpeed(1.0)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +112,7 @@ export default function PhoneNumberListeningPage() {
       </p>
 
       <div className='space-y-6'>
-        {/* New Number / Replay buttons */}
+        {/* New Number / Replay buttons + Speed controls */}
         <div className='flex items-center gap-2'>
           <Button onClick={handleStart}>New Number</Button>
 
@@ -107,6 +122,35 @@ export default function PhoneNumberListeningPage() {
               Replay
             </Button>
           )}
+
+          {/* Speed controls - right aligned */}
+          <div className='ml-auto flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='icon'
+              onClick={handleSpeedDown}
+              disabled={speed <= 0.1}
+            >
+              <Minus className='size-4' />
+            </Button>
+            <span className='font-mono text-sm w-12 text-center'>{speed}x</span>
+            <Button
+              variant='outline'
+              size='icon'
+              onClick={handleSpeedUp}
+              disabled={speed >= 2.0}
+            >
+              <Plus className='size-4' />
+            </Button>
+            <Button
+              variant='outline'
+              size='icon'
+              onClick={handleSpeedReset}
+              disabled={speed === 1.0}
+            >
+              <RotateCcw className='size-4' />
+            </Button>
+          </div>
         </div>
 
         {/* Number display + Input on the same line */}
