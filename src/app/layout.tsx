@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 
 import { ThemeProvider } from '@/components/theme-provider'
+import { Header } from '@/components/header'
 
 import '@/styles/globals.css'
 
@@ -36,7 +37,8 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
-          {children}
+          <Header />
+          <main className='max-w-3xl mx-auto px-6 pt-16'>{children}</main>
           <Analytics />
         </ThemeProvider>
       </body>
