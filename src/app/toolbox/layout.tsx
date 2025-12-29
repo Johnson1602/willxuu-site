@@ -3,5 +3,5 @@ export default function ToolboxLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <div className='py-12'>{children}</div>
+  return <div className='py-8'>{children}</div>
 }

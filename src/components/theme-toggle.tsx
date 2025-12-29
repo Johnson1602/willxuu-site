@@ -1,14 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { Monitor, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import posthog from 'posthog-js'
 
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -16,34 +17,59 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  const handleToggle = () => {
-    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
+  const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme)
     posthog.capture('toggled_theme', {
-      previous_theme: resolvedTheme,
+      previous_theme: theme,
       new_theme: newTheme,
     })
   }
 
   if (!mounted) {
     return (
-      <Button variant='ghost' size='icon' className='relative' disabled>
-        <span className='sr-only'>Toggle theme</span>
-      </Button>
+      <div className='flex items-center gap-1 rounded-full border p-1'>
+        <div className='size-8' />
+        <div className='size-8' />
+        <div className='size-8' />
+      </div>
     )
   }
 
   return (
-    <Button
-      variant='ghost'
-      size='icon'
-      className='relative'
-      aria-label='Toggle color theme'
-      onClick={handleToggle}
-    >
-      <Sun className='size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
-      <Moon className='absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
-      <span className='sr-only'>Toggle theme</span>
-    </Button>
+    <div className='flex items-center gap-1 rounded-full border p-1'>
+      <Button
+        variant='ghost'
+        size='icon'
+        className={cn('size-8 rounded-full', {
+          'bg-accent hover:bg-accent!': theme === 'light',
+        })}
+        aria-label='Light theme'
+        onClick={() => handleThemeChange('light')}
+      >
+        <Sun className='size-4' />
+      </Button>
+      <Button
+        variant='ghost'
+        size='icon'
+        className={cn('size-8 rounded-full', {
+          'bg-accent hover:bg-accent!': theme === 'system',
+        })}
+        aria-label='System theme'
+        onClick={() => handleThemeChange('system')}
+      >
+        <Monitor className='size-4' />
+      </Button>
+      <Button
+        variant='ghost'
+        size='icon'
+        className={cn('size-8 rounded-full', {
+          'bg-accent hover:bg-accent!': theme === 'dark',
+        })}
+        aria-label='Dark theme'
+        onClick={() => handleThemeChange('dark')}
+      >
+        <Moon className='size-4' />
+      </Button>
+    </div>
   )
 }

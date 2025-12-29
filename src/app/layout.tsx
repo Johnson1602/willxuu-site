@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 
 import '@/styles/globals.css'
 
@@ -33,12 +34,15 @@ export default function RootLayout({
   return (
     <html lang='en' className={inter.variable} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
         <ThemeProvider>
           <Header />
-          <main className='max-w-3xl mx-auto px-6 pt-16'>{children}</main>
+          <main className='max-w-3xl mx-auto px-6 flex-1 w-full flex flex-col'>
+            {children}
+          </main>
+          <Footer />
           <Analytics />
         </ThemeProvider>
       </body>

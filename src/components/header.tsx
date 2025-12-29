@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export function Header() {
   return (
-    <header className='fixed top-0 left-0 right-0 z-50 py-4 text-sm'>
+    <header className='sticky top-0 left-0 right-0 z-50 py-4 text-sm'>
       <nav className='max-w-3xl mx-auto px-6 flex items-center gap-6'>
         <Link
           href='/'
