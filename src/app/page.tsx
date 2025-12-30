@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import posthog from 'posthog-js'
 import styles from './page.module.css'
@@ -18,6 +19,7 @@ export default function Page() {
         <p>
           Hi, I&apos;m Weiyi <span className={styles.waveHand}>👋</span>
         </p>
+
         <p>
           I&apos;m a frontend developer at{' '}
           <a
@@ -31,9 +33,16 @@ export default function Page() {
             Xiaomi <ArrowUpRight size={16} />
           </a>
         </p>
-        <p>This site is still a work in progress</p>
+
         <p>
-          You can find my code on{' '}
+          I build random{' '}
+          <Link href='/toolbox' className='underline'>
+            mini tools
+          </Link>
+        </p>
+
+        <p>
+          You can also find my code on{' '}
           <a
             href='https://github.com/Johnson1602'
             target='_blank'
