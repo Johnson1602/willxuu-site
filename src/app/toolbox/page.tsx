@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Headphones } from 'lucide-react'
+import { Headphones, Link2 } from 'lucide-react'
 
 const tools = [
   {
@@ -8,13 +8,19 @@ const tools = [
     href: '/toolbox/phone-number-listening',
     icon: Headphones,
   },
+  {
+    title: 'Sharable Cursor Commands',
+    description: 'Generate shareable links for Cursor IDE commands',
+    href: '/toolbox/sharable-cursor-commands',
+    icon: Link2,
+  },
 ]
 
 export default function ToolboxPage() {
   return (
     <div>
       <h1 className='text-2xl font-bold mb-6'>Toolbox</h1>
-      <div className='grid gap-4'>
+      <div className='grid gap-4 sm:grid-cols-2'>
         {tools.map((tool) => (
           <Link
             key={tool.href}
