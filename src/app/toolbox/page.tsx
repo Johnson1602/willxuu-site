@@ -3,9 +3,9 @@ import { Headphones, Link2 } from 'lucide-react'
 
 const tools = [
   {
-    title: 'Phone Number Listening',
-    description: 'Practice your English listening skills with phone numbers',
-    href: '/toolbox/phone-number-listening',
+    title: 'Dictation Practice',
+    description: 'Listen and type phone numbers or place names',
+    href: '/toolbox/dictation-practice',
     icon: Headphones,
   },
   {
