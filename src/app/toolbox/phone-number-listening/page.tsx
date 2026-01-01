@@ -3,8 +3,11 @@
 import { useState, useRef } from 'react'
 import { Check, X, ArrowLeft, Volume2, Minus, Plus, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 function generatePhoneNumber(): string {
   const digits = Array.from({ length: 10 }, () =>
@@ -13,57 +16,132 @@ function generatePhoneNumber(): string {
   return digits.join('')
 }
 
+const PLACE_WORDS = [
+  'Florence',
+  'Nairobi',
+  'Seville',
+  'Bologna',
+  'Brisbane',
+  'Orlando',
+  'Phoenix',
+  'Antwerp',
+  'Kampala',
+  'Bordeaux',
+  'Portland',
+  'Marseille',
+  'Stockholm',
+  'Edmonton',
+  'Helsinki',
+  'Valencia'
+]
+
+function generatePlaceWord(): string {
+  return PLACE_WORDS[Math.floor(Math.random() * PLACE_WORDS.length)]
+}
+
 const BASE_RATE = 0.7
 
+type Mode = 'phone' | 'place'
+type GameState = 'idle' | 'playing' | 'revealed'
+
 function speakPhoneNumber(phoneNumber: string, speedMultiplier: number) {
-  // Cancel any ongoing speech
   speechSynthesis.cancel()
 
-  // Add spaces between digits for clearer pronunciation
   const spacedDigits = phoneNumber.split('').join(' ')
-
   const utterance = new SpeechSynthesisUtterance(spacedDigits)
   utterance.rate = BASE_RATE * speedMultiplier
   utterance.lang = 'en-US'
   speechSynthesis.speak(utterance)
 }
 
+function speakPlaceWord(word: string, speedMultiplier: number) {
+  speechSynthesis.cancel()
+
+  const wordUtterance = new SpeechSynthesisUtterance(word)
+  wordUtterance.rate = BASE_RATE * speedMultiplier
+  wordUtterance.lang = 'en-US'
+
+  const spelling = word.split('').join(' ')
+  const spelledUtterance = new SpeechSynthesisUtterance(spelling)
+  spelledUtterance.rate = BASE_RATE * speedMultiplier
+  spelledUtterance.lang = 'en-US'
+
+  wordUtterance.onend = () => {
+    speechSynthesis.speak(spelledUtterance)
+  }
+
+  speechSynthesis.speak(wordUtterance)
+}
+
 function formatPhoneNumber(num: string): string {
   return num.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')
 }
 
-// Non-breaking space to maintain height
 const EMPTY_PLACEHOLDER = '\u00A0'
 
-type GameState = 'idle' | 'playing' | 'revealed'
-
 export default function PhoneNumberListeningPage() {
-  const [generatedNumber, setGeneratedNumber] = useState<string | null>(null)
+  const [mode, setMode] = useState<Mode>('phone')
+  const [generatedValue, setGeneratedValue] = useState<string | null>(null)
   const [userInput, setUserInput] = useState('')
   const [gameState, setGameState] = useState<GameState>('idle')
   const [speed, setSpeed] = useState(1.0)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const digitsOnly = userInput.replace(/\D/g, '')
-  const isCorrect = digitsOnly === generatedNumber
+  const sanitizeInput = (value: string) => {
+    if (mode === 'phone') {
+      return value.replace(/\D/g, '').slice(0, 10)
+    }
+    return value.replace(/[^\p{L}]/gu, '')
+  }
+
+  const normalizedGenerated =
+    mode === 'phone'
+      ? generatedValue ?? ''
+      : (generatedValue ?? '').toLowerCase()
+  const normalizedUser =
+    mode === 'phone' ? userInput : userInput.toLowerCase()
+
+  const isCorrect =
+    gameState === 'revealed' && generatedValue
+      ? normalizedUser === normalizedGenerated
+      : false
+
+  const startLabel = mode === 'phone' ? 'New Number' : 'New Word'
+  const placeholder =
+    mode === 'phone' ? 'Type the 10 digits you heard...' : 'Type the word you heard...'
+
+  const handleModeChange = (value: string) => {
+    const nextMode: Mode = value === 'place' ? 'place' : 'phone'
+    setMode(nextMode)
+    setGeneratedValue(null)
+    setUserInput('')
+    setGameState('idle')
+  }
 
   const handleStart = () => {
-    const number = generatePhoneNumber()
-    setGeneratedNumber(number)
+    const value = mode === 'phone' ? generatePhoneNumber() : generatePlaceWord()
+    setGeneratedValue(value)
     setUserInput('')
     setGameState('playing')
     inputRef.current?.focus()
-    // 1 second delay before reading
+
     setTimeout(() => {
-      speakPhoneNumber(number, speed)
+      if (mode === 'phone') {
+        speakPhoneNumber(value, speed)
+      } else {
+        speakPlaceWord(value, speed)
+      }
     }, 1000)
   }
 
   const handleReplay = () => {
-    if (generatedNumber) {
-      speakPhoneNumber(generatedNumber, speed)
-      inputRef.current?.focus()
+    if (!generatedValue) return
+    if (mode === 'phone') {
+      speakPhoneNumber(generatedValue, speed)
+    } else {
+      speakPlaceWord(generatedValue, speed)
     }
+    inputRef.current?.focus()
   }
 
   const handleSpeedDown = () => {
@@ -79,21 +157,39 @@ export default function PhoneNumberListeningPage() {
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '')
-    setUserInput(value)
+    setUserInput(sanitizeInput(e.target.value))
+  }
 
-    // Auto-reveal when 10 digits entered
-    if (generatedNumber && value.length === 10 && gameState === 'playing') {
-      setGameState('revealed')
+  const handleSubmit = () => {
+    if (!generatedValue) return
+    setGameState('revealed')
+  }
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
     }
   }
 
-  // Determine what to show in the number display area
-  const getNumberDisplay = () => {
-    if (gameState === 'revealed') {
-      return formatPhoneNumber(generatedNumber!)
+  const getDisplayContent = () => {
+    if (gameState !== 'revealed' || !generatedValue) {
+      return EMPTY_PLACEHOLDER
     }
-    return EMPTY_PLACEHOLDER
+
+    const displayText =
+      mode === 'phone' ? formatPhoneNumber(generatedValue) : generatedValue
+
+    return (
+      <div className='inline-flex items-center gap-2'>
+        {isCorrect ? (
+          <Check className='size-6 text-green-500' />
+        ) : (
+          <X className='size-6 text-red-500' />
+        )}
+        <span>{displayText}</span>
+      </div>
+    )
   }
 
   return (
@@ -108,13 +204,39 @@ export default function PhoneNumberListeningPage() {
 
       <h1 className='text-2xl font-bold mb-2'>Phone Number Listening</h1>
       <p className='text-muted-foreground mb-8'>
-        Click Start to hear a phone number, then type what you heard.
+        Click Start to hear the prompt, then type what you heard.
       </p>
 
       <div className='space-y-6'>
-        {/* New Number / Replay buttons + Speed controls */}
+        <div className='space-y-2'>
+          <div className='flex items-center gap-4'>
+            <Label className='text-sm font-medium'>Content type</Label>
+            <RadioGroup
+              className='flex flex-wrap items-center gap-4'
+              value={mode}
+              onValueChange={handleModeChange}
+            >
+              <div className='flex items-center gap-2'>
+                <RadioGroupItem value='phone' id='mode-phone' />
+                <Label htmlFor='mode-phone' className='text-sm'>
+                  Phone number
+                </Label>
+              </div>
+              <div className='flex items-center gap-2'>
+                <RadioGroupItem value='place' id='mode-place' />
+                <Label htmlFor='mode-place' className='text-sm'>
+                  Place name
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <p className='text-sm text-muted-foreground'>
+            Press Start to hear it, then press Enter to check.
+          </p>
+        </div>
+
         <div className='flex items-center gap-2'>
-          <Button onClick={handleStart}>New Number</Button>
+          <Button onClick={handleStart}>{startLabel}</Button>
 
           {(gameState === 'playing' || gameState === 'revealed') && (
             <Button variant='outline' onClick={handleReplay}>
@@ -123,7 +245,6 @@ export default function PhoneNumberListeningPage() {
             </Button>
           )}
 
-          {/* Speed controls - right aligned */}
           <div className='ml-auto flex items-center gap-2'>
             <Button
               variant='outline'
@@ -153,36 +274,25 @@ export default function PhoneNumberListeningPage() {
           </div>
         </div>
 
-        {/* Number display + Input on the same line */}
         <div className='flex items-center gap-4'>
-          {/* Input with result icon (left side) */}
           <div className='flex items-center gap-3'>
             <Input
               ref={inputRef}
               type='text'
-              inputMode='numeric'
-              placeholder='Type what you heard...'
+              inputMode={mode === 'phone' ? 'numeric' : 'text'}
+              placeholder={placeholder}
               value={userInput}
               onChange={handleInputChange}
-              maxLength={10}
+              onKeyDown={handleInputKeyDown}
+              maxLength={mode === 'phone' ? 10 : undefined}
               className='font-mono tracking-wider w-64'
               autoCorrect='off'
               autoComplete='off'
             />
-            {gameState === 'revealed' && (
-              <>
-                {isCorrect ? (
-                  <Check className='size-6 text-green-500' />
-                ) : (
-                  <X className='size-6 text-red-500' />
-                )}
-              </>
-            )}
           </div>
 
-          {/* Number display area (right side) */}
-          <div className='text-lg font-mono tracking-wider min-w-[160px]'>
-            {getNumberDisplay()}
+          <div className='text-lg font-mono tracking-wider min-w-[200px]'>
+            {getDisplayContent()}
           </div>
         </div>
       </div>
