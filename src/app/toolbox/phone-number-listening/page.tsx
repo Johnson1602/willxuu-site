@@ -1,7 +1,15 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Check, X, ArrowLeft, Volume2, Minus, Plus, RotateCcw } from 'lucide-react'
+import {
+  Check,
+  X,
+  ArrowLeft,
+  Volume2,
+  Minus,
+  Plus,
+  RotateCcw,
+} from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -32,7 +40,7 @@ const PLACE_WORDS = [
   'Stockholm',
   'Edmonton',
   'Helsinki',
-  'Valencia'
+  'Valencia',
 ]
 
 function generatePlaceWord(): string {
@@ -98,17 +106,17 @@ export default function PhoneNumberListeningPage() {
     mode === 'phone'
       ? generatedValue ?? ''
       : (generatedValue ?? '').toLowerCase()
-  const normalizedUser =
-    mode === 'phone' ? userInput : userInput.toLowerCase()
+  const normalizedUser = mode === 'phone' ? userInput : userInput.toLowerCase()
 
   const isCorrect =
     gameState === 'revealed' && generatedValue
       ? normalizedUser === normalizedGenerated
       : false
 
-  const startLabel = mode === 'phone' ? 'New Number' : 'New Word'
   const placeholder =
-    mode === 'phone' ? 'Type the 10 digits you heard...' : 'Type the word you heard...'
+    mode === 'phone'
+      ? 'Type the 10 digits you heard'
+      : 'Type the place name you heard'
 
   const handleModeChange = (value: string) => {
     const nextMode: Mode = value === 'place' ? 'place' : 'phone'
@@ -202,9 +210,9 @@ export default function PhoneNumberListeningPage() {
         Back to Toolbox
       </Link>
 
-      <h1 className='text-2xl font-bold mb-2'>Phone Number Listening</h1>
+      <h1 className='text-2xl font-bold mb-2'>Dictation Practice</h1>
       <p className='text-muted-foreground mb-8'>
-        Click Start to hear the prompt, then type what you heard.
+        Choose phone numbers or place names, type out what you heard.
       </p>
 
       <div className='space-y-6'>
@@ -231,12 +239,12 @@ export default function PhoneNumberListeningPage() {
             </RadioGroup>
           </div>
           <p className='text-sm text-muted-foreground'>
-            Press Start to hear it, then press Enter to check.
+            Pick a type, press Enter to check.
           </p>
         </div>
 
         <div className='flex items-center gap-2'>
-          <Button onClick={handleStart}>{startLabel}</Button>
+          <Button onClick={handleStart}>Start</Button>
 
           {(gameState === 'playing' || gameState === 'revealed') && (
             <Button variant='outline' onClick={handleReplay}>
