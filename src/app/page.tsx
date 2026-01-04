@@ -25,6 +25,7 @@ export default function Page() {
           <a
             href='https://www.mi.com/global/'
             target='_blank'
+            rel='noopener noreferrer'
             className='inline-flex items-center underline'
             onClick={() =>
               handleExternalLinkClick('Xiaomi', 'https://www.mi.com/global/')
@@ -46,6 +47,7 @@ export default function Page() {
           <a
             href='https://github.com/Johnson1602'
             target='_blank'
+            rel='noopener noreferrer'
             className='inline-flex items-center underline'
             onClick={() =>
               handleExternalLinkClick(
@@ -60,6 +62,7 @@ export default function Page() {
           <a
             href='https://x.com/willxuu_'
             target='_blank'
+            rel='noopener noreferrer'
             className='inline-flex items-center underline'
             onClick={() =>
               handleExternalLinkClick('X', 'https://x.com/willxuu_')
