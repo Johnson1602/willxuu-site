@@ -18,35 +18,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { buildDigitSSML, buildPlaceSSML } from '@/lib/ssml'
+import { getRandomPlaceName } from '@/lib/place-names'
 
 function generatePhoneNumber(): string {
   const digits = Array.from({ length: 10 }, () =>
     Math.floor(Math.random() * 10).toString()
   )
   return digits.join('')
-}
-
-const PLACE_WORDS = [
-  'Florence',
-  'Nairobi',
-  'Seville',
-  'Bologna',
-  'Brisbane',
-  'Orlando',
-  'Phoenix',
-  'Antwerp',
-  'Kampala',
-  'Bordeaux',
-  'Portland',
-  'Marseille',
-  'Stockholm',
-  'Edmonton',
-  'Helsinki',
-  'Valencia',
-]
-
-function generatePlaceWord(): string {
-  return PLACE_WORDS[Math.floor(Math.random() * PLACE_WORDS.length)]
 }
 
 type Mode = 'phone' | 'place'
@@ -147,7 +125,7 @@ export default function PhoneNumberListeningPage() {
   }
 
   const handleStart = async () => {
-    const value = mode === 'phone' ? generatePhoneNumber() : generatePlaceWord()
+    const value = mode === 'phone' ? generatePhoneNumber() : getRandomPlaceName()
     setGeneratedValue(value)
     setUserInput('')
     setGameState('playing')
