@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Check, Copy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -17,7 +17,42 @@ const BASE_URLS: Record<LinkType, string> = {
   prompt: 'https://cursor.com/link/prompt',
 }
 
+function PageLayout({
+  description,
+  children,
+}: {
+  description: string
+  children?: React.ReactNode
+}) {
+  return (
+    <div>
+      <Link
+        href='/toolbox'
+        className='inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6'
+      >
+        <ArrowLeft className='size-4' />
+        Back to Toolbox
+      </Link>
+
+      <h1 className='text-2xl font-bold mb-2'>Sharable Cursor Links</h1>
+      <p className='text-muted-foreground mb-8'>{description}</p>
+
+      {children}
+    </div>
+  )
+}
+
 export default function SharableCursorCommandsPage() {
+  return (
+    <Suspense
+      fallback={<PageLayout description='Loading...' />}
+    >
+      <SharableCursorLinksContent />
+    </Suspense>
+  )
+}
+
+function SharableCursorLinksContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -106,23 +141,13 @@ export default function SharableCursorCommandsPage() {
     }
   }
 
+  const description =
+    linkType === 'command'
+      ? 'Provide the command name & content, then copy the ready-to-share command link.'
+      : 'Provide the prompt text, then copy the ready-to-share prompt link.'
+
   return (
-    <div>
-      <Link
-        href='/toolbox'
-        className='inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6'
-      >
-        <ArrowLeft className='size-4' />
-        Back to Toolbox
-      </Link>
-
-      <h1 className='text-2xl font-bold mb-2'>Sharable Cursor Links</h1>
-      <p className='text-muted-foreground mb-8'>
-        {linkType === 'command'
-          ? 'Provide the command name & content, then copy the ready-to-share command link.'
-          : 'Provide the prompt text, then copy the ready-to-share prompt link.'}
-      </p>
-
+    <PageLayout description={description}>
       <div className='max-w-xl space-y-6'>
         <Tabs value={linkType} onValueChange={handleLinkTypeChange}>
           <TabsList>
@@ -211,6 +236,6 @@ export default function SharableCursorCommandsPage() {
           </p>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }
