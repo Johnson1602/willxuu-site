@@ -1,34 +1,75 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Check, Copy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const BASE_URL = 'https://cursor.com/link/command'
+type LinkType = 'command' | 'prompt'
+
+const BASE_URLS: Record<LinkType, string> = {
+  command: 'https://cursor.com/link/command',
+  prompt: 'https://cursor.com/link/prompt',
+}
 
 export default function SharableCursorCommandsPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const typeParam = searchParams.get('type')
+  const linkType: LinkType =
+    typeParam === 'prompt' || typeParam === 'command' ? typeParam : 'command'
+
   const [name, setName] = useState('')
   const [text, setText] = useState('')
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState<string | null>(null)
 
+  const handleLinkTypeChange = (value: string) => {
+    const newType = value as LinkType
+    const params = new URLSearchParams(searchParams.toString())
+    if (newType === 'command') {
+      params.delete('type')
+    } else {
+      params.set('type', newType)
+    }
+    const query = params.toString()
+    router.replace(query ? `?${query}` : window.location.pathname)
+
+    // Clear inputs when switching tabs
+    setName('')
+    setText('')
+    setCopyError(null)
+  }
+
   const generatedUrl = useMemo(() => {
     const params = new URLSearchParams()
-    if (name.trim()) params.set('name', name.trim())
+    if (linkType === 'command' && name.trim()) {
+      params.set('name', name.trim())
+    }
     if (text.trim()) params.set('text', text.trim())
     const query = params.toString()
-    return query ? `${BASE_URL}?${query}` : BASE_URL
-  }, [name, text])
+    const baseUrl = BASE_URLS[linkType]
+    return query ? `${baseUrl}?${query}` : baseUrl
+  }, [linkType, name, text])
 
-  const canCopy = name.trim().length > 0 && text.trim().length > 0
+  const canCopy =
+    linkType === 'command'
+      ? name.trim().length > 0 && text.trim().length > 0
+      : text.trim().length > 0
 
   const handleCopy = async () => {
     if (!canCopy) {
-      setCopyError('Fill in both fields before copying.')
+      setCopyError(
+        linkType === 'command'
+          ? 'Fill in both fields before copying.'
+          : 'Fill in the text field before copying.'
+      )
       return
     }
     setCopyError(null)
@@ -75,28 +116,42 @@ export default function SharableCursorCommandsPage() {
         Back to Toolbox
       </Link>
 
-      <h1 className='text-2xl font-bold mb-2'>Sharable Cursor Commands</h1>
+      <h1 className='text-2xl font-bold mb-2'>Sharable Cursor Links</h1>
       <p className='text-muted-foreground mb-8'>
-        Provide the command name &amp; content, then copy the ready-to-share
-        command link.
+        {linkType === 'command'
+          ? 'Provide the command name & content, then copy the ready-to-share command link.'
+          : 'Provide the prompt text, then copy the ready-to-share prompt link.'}
       </p>
 
       <div className='max-w-xl space-y-6'>
-        <div className='space-y-2'>
-          <label
-            className='text-sm font-medium text-muted-foreground'
-            htmlFor='command-name'
-          >
-            Name
-          </label>
-          <Input
-            id='command-name'
-            placeholder='greeting'
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            aria-label='Command name'
-          />
-        </div>
+        <Tabs value={linkType} onValueChange={handleLinkTypeChange}>
+          <TabsList>
+            <TabsTrigger value='command' className='hover:cursor-pointer'>
+              Command
+            </TabsTrigger>
+            <TabsTrigger value='prompt' className='hover:cursor-pointer'>
+              Prompt
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {linkType === 'command' && (
+          <div className='space-y-2'>
+            <label
+              className='text-sm font-medium text-muted-foreground'
+              htmlFor='command-name'
+            >
+              Name
+            </label>
+            <Input
+              id='command-name'
+              placeholder='greeting'
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              aria-label='Command name'
+            />
+          </div>
+        )}
 
         <div className='space-y-2'>
           <label
@@ -107,7 +162,9 @@ export default function SharableCursorCommandsPage() {
           </label>
           <Textarea
             id='command-text'
-            placeholder='Hello my friend, create your own sharable commands...'
+            placeholder={`Hello my friend, create your own sharable ${
+              linkType === 'command' ? 'commands' : 'prompts'
+            }...`}
             value={text}
             onChange={(event) => setText(event.target.value)}
             aria-label='Command text'
