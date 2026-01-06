@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import {
   Check,
   X,
   ArrowLeft,
   Volume2,
+  Loader2,
   Minus,
   Plus,
   RotateCcw,
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { buildDigitSSML, buildPlaceSSML } from '@/lib/ssml'
 
 function generatePhoneNumber(): string {
   const digits = Array.from({ length: 10 }, () =>
@@ -47,38 +49,41 @@ function generatePlaceWord(): string {
   return PLACE_WORDS[Math.floor(Math.random() * PLACE_WORDS.length)]
 }
 
-const BASE_RATE = 0.7
-
 type Mode = 'phone' | 'place'
 type GameState = 'idle' | 'playing' | 'revealed'
 
-function speakPhoneNumber(phoneNumber: string, speedMultiplier: number) {
-  speechSynthesis.cancel()
+async function speakWithGoogleTTS(
+  text: string,
+  mode: 'phone' | 'place',
+  speed: number = 1.0
+): Promise<HTMLAudioElement> {
+  const ssml = mode === 'phone' ? buildDigitSSML(text) : buildPlaceSSML(text)
 
-  const spacedDigits = phoneNumber.split('').join(' ')
-  const utterance = new SpeechSynthesisUtterance(spacedDigits)
-  utterance.rate = BASE_RATE * speedMultiplier
-  utterance.lang = 'en-US'
-  speechSynthesis.speak(utterance)
-}
+  const response = await fetch('/api/tts-google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ssml, speed }),
+  })
 
-function speakPlaceWord(word: string, speedMultiplier: number) {
-  speechSynthesis.cancel()
-
-  const wordUtterance = new SpeechSynthesisUtterance(word)
-  wordUtterance.rate = BASE_RATE * speedMultiplier
-  wordUtterance.lang = 'en-US'
-
-  const spelling = word.split('').join(' ')
-  const spelledUtterance = new SpeechSynthesisUtterance(spelling)
-  spelledUtterance.rate = BASE_RATE * speedMultiplier
-  spelledUtterance.lang = 'en-US'
-
-  wordUtterance.onend = () => {
-    speechSynthesis.speak(spelledUtterance)
+  if (!response.ok) {
+    throw new Error('Failed to generate speech')
   }
 
-  speechSynthesis.speak(wordUtterance)
+  const audioBlob = await response.blob()
+  const audioUrl = URL.createObjectURL(audioBlob)
+  const audio = new Audio(audioUrl)
+
+  return new Promise((resolve, reject) => {
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl)
+      resolve(audio)
+    }
+    audio.onerror = () => {
+      URL.revokeObjectURL(audioUrl)
+      reject(new Error('Audio playback failed'))
+    }
+    audio.play()
+  })
 }
 
 function formatPhoneNumber(num: string): string {
@@ -92,8 +97,23 @@ export default function PhoneNumberListeningPage() {
   const [generatedValue, setGeneratedValue] = useState<string | null>(null)
   const [userInput, setUserInput] = useState('')
   const [gameState, setGameState] = useState<GameState>('idle')
+  const [isLoading, setIsLoading] = useState(false)
   const [speed, setSpeed] = useState(1.0)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const speakValue = useCallback(
+    async (value: string, currentMode: Mode, currentSpeed: number) => {
+      setIsLoading(true)
+      try {
+        await speakWithGoogleTTS(value, currentMode, currentSpeed)
+      } catch (error) {
+        console.error('Speech error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    []
+  )
 
   const sanitizeInput = (value: string) => {
     if (mode === 'phone') {
@@ -126,34 +146,26 @@ export default function PhoneNumberListeningPage() {
     setGameState('idle')
   }
 
-  const handleStart = () => {
+  const handleStart = async () => {
     const value = mode === 'phone' ? generatePhoneNumber() : generatePlaceWord()
     setGeneratedValue(value)
     setUserInput('')
     setGameState('playing')
     inputRef.current?.focus()
 
-    setTimeout(() => {
-      if (mode === 'phone') {
-        speakPhoneNumber(value, speed)
-      } else {
-        speakPlaceWord(value, speed)
-      }
-    }, 1000)
+    // Small delay before speaking
+    await new Promise((r) => setTimeout(r, 500))
+    speakValue(value, mode, speed)
   }
 
   const handleReplay = () => {
-    if (!generatedValue) return
-    if (mode === 'phone') {
-      speakPhoneNumber(generatedValue, speed)
-    } else {
-      speakPlaceWord(generatedValue, speed)
-    }
+    if (!generatedValue || isLoading) return
+    speakValue(generatedValue, mode, speed)
     inputRef.current?.focus()
   }
 
   const handleSpeedDown = () => {
-    setSpeed((s) => Math.max(0.1, Math.round((s - 0.1) * 10) / 10))
+    setSpeed((s) => Math.max(0.5, Math.round((s - 0.1) * 10) / 10))
   }
 
   const handleSpeedUp = () => {
@@ -244,11 +256,28 @@ export default function PhoneNumberListeningPage() {
         </div>
 
         <div className='flex items-center gap-2'>
-          <Button onClick={handleStart}>Start</Button>
+          <Button onClick={handleStart} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className='size-4 animate-spin' />
+                Loading...
+              </>
+            ) : (
+              'Start'
+            )}
+          </Button>
 
           {(gameState === 'playing' || gameState === 'revealed') && (
-            <Button variant='outline' onClick={handleReplay}>
-              <Volume2 className='size-4' />
+            <Button
+              variant='outline'
+              onClick={handleReplay}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className='size-4 animate-spin' />
+              ) : (
+                <Volume2 className='size-4' />
+              )}
               Replay
             </Button>
           )}
@@ -258,7 +287,7 @@ export default function PhoneNumberListeningPage() {
               variant='outline'
               size='icon'
               onClick={handleSpeedDown}
-              disabled={speed <= 0.1}
+              disabled={speed <= 0.5}
             >
               <Minus className='size-4' />
             </Button>
