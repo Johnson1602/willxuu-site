@@ -24,18 +24,33 @@ Improve the loading state handling in `/src/app/toolbox/dictation-practice/page.
 
 ### 2. Distinguish Between Fetching and Playing States
 
-**What**: Replace single `isLoading` boolean with a more granular state to show "Loading audio..." vs "Playing...".
+**What**: Replace single `isLoading` boolean with a more granular state and show status to the right of buttons.
+
+**UX Specification**:
+- Start button: Always displays "Start" text only (no icons)
+- Replay button: Always displays "Replay" text only (no icons)
+- State indicator appears to the RIGHT of the Replay button:
+  - `'fetching'` → Spinning `Loader2` icon
+  - `'playing'` → `Volume2` icon (speaker)
+  - `'idle'` → No icon (hidden)
+- Both buttons disabled when `loadingState !== 'idle'`
 
 **Implementation**:
 - Replace `isLoading` with `loadingState: 'idle' | 'fetching' | 'playing'`
-- Update `speakWithGoogleTTS` to accept callbacks or split into fetch + play phases
-- Alternative: Keep TTS function as-is but have `speakValue` set different states:
+- Refactor `speakWithGoogleTTS` to separate fetch and play phases:
+  - New function returns audio element without auto-playing
+  - Caller controls when to set `'playing'` state and call `audio.play()`
+- Update `speakValue`:
   - Set `'fetching'` before the API call
-  - Set `'playing'` after receiving the blob, before `audio.play()`
+  - Set `'playing'` after receiving audio, before playing
   - Set `'idle'` when audio ends or on error
-- Update button text:
-  - `'fetching'` → "Loading..."
-  - `'playing'` → "Playing..." (or just show speaker icon animating)
+- Update button UI:
+  - Remove `Loader2` and `Volume2` icons from inside buttons
+  - Add state indicator element after Replay button:
+    ```tsx
+    {loadingState === 'fetching' && <Loader2 className='size-4 animate-spin' />}
+    {loadingState === 'playing' && <Volume2 className='size-4' />}
+    ```
 
 **Location**: Lines 100, 55-87, 104-116, 259-283
 
