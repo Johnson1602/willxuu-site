@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 
 import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 
@@ -39,7 +40,10 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <Header />
-          <main className='max-w-3xl mx-auto px-6 flex-1 w-full flex flex-col'>
+          <div className='fixed top-14 right-6 z-50'>
+            <ThemeToggle />
+          </div>
+          <main className='mx-auto px-6 flex-1 w-full flex flex-col'>
             {children}
           </main>
           <Footer />

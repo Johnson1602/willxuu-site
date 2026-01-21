@@ -14,7 +14,7 @@ export default function Page() {
   }
 
   return (
-    <div className='flex flex-col justify-center flex-1'>
+    <div className='flex flex-col justify-center flex-1 max-w-3xl mx-auto w-full'>
       <div className='flex flex-col font-medium gap-y-2 md:gap-y-4 mb-16'>
         <p>
           Hi, I&apos;m Weiyi <span className={styles.waveHand}>👋</span>

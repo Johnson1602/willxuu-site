@@ -22,6 +22,17 @@ export function Header() {
           <Logo />
         </Link>
         <Link
+          href='/favorites'
+          className={cn(
+            'hover:text-foreground transition-colors font-medium',
+            pathname.startsWith('/favorites')
+              ? 'text-foreground'
+              : 'text-muted-foreground'
+          )}
+        >
+          Favorites
+        </Link>
+        <Link
           href='/toolbox'
           className={cn(
             'hover:text-foreground transition-colors font-medium',
