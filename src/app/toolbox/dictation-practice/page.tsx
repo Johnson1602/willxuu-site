@@ -191,7 +191,7 @@ export default function PhoneNumberListeningPage() {
   }
 
   return (
-    <div>
+    <div className='max-w-3xl mx-auto w-full'>
       <Link
         href='/toolbox'
         className='inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6'

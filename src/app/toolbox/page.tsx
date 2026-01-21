@@ -18,7 +18,7 @@ const tools = [
 
 export default function ToolboxPage() {
   return (
-    <div>
+    <div className='max-w-3xl mx-auto w-full'>
       <h1 className='text-2xl font-bold mb-6'>Toolbox</h1>
       <div className='grid gap-4 sm:grid-cols-2'>
         {tools.map((tool) => (
