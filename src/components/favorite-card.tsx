@@ -1,10 +1,5 @@
-'use client'
-
 import Image from 'next/image'
-import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
 
-import { cn } from '@/lib/utils'
 import { type FavoriteItem, categoryLabels } from '@/lib/favorites'
 
 interface FavoriteCardProps {
@@ -22,54 +17,19 @@ function ThemedImage({
   alt: string
   className?: string
 }) {
-  const { resolvedTheme } = useTheme()
-  const [ready, setReady] = useState(false)
-  const [theme, setTheme] = useState(resolvedTheme)
-
-  useEffect(() => {
-    if (!resolvedTheme) return
-
-    if (!ready) {
-      setTheme(resolvedTheme)
-      requestAnimationFrame(() => setReady(true))
-    } else {
-      requestAnimationFrame(() => setTheme(resolvedTheme))
-    }
-  }, [resolvedTheme, ready])
-
-  const isDark = theme === 'dark'
-
   return (
     <>
       <Image
         src={lightSrc}
         alt={alt}
         fill
-        className={cn(
-          'object-cover',
-          ready
-            ? cn(
-                'transition-opacity duration-500 ease-out',
-                isDark ? 'opacity-0' : 'opacity-100',
-              )
-            : 'opacity-100 dark:opacity-0',
-          className,
-        )}
+        className='object-cover dark:opacity-0'
       />
       <Image
         src={darkSrc}
         alt={alt}
         fill
-        className={cn(
-          'object-cover',
-          ready
-            ? cn(
-                'transition-opacity duration-500 ease-out',
-                isDark ? 'opacity-100' : 'opacity-0',
-              )
-            : 'opacity-0 dark:opacity-100',
-          className,
-        )}
+        className='object-cover opacity-0 dark:opacity-100'
       />
     </>
   )
