@@ -56,6 +56,7 @@ export const favorites: FavoriteItem[] = [
       '/favorites/airpods-pro-light.svg',
       '/favorites/airpods-pro-dark.svg',
     ],
+    link: 'https://www.apple.com/airpods-pro/',
   },
   {
     id: 'ipad-mini',
@@ -69,5 +70,6 @@ export const favorites: FavoriteItem[] = [
       dark: '/favorites/ipad-mini-dark.svg',
     },
     images: ['/favorites/ipad-mini-light.svg', '/favorites/ipad-mini-dark.svg'],
+    link: 'https://www.apple.com/ipad-mini/',
   },
 ]
