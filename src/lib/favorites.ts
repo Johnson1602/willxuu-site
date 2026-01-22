@@ -1,8 +1,4 @@
-export type FavoriteCategory =
-  | 'tech-gear'
-  | 'restaurant'
-  | 'book'
-  | 'place'
+export type FavoriteCategory = 'tech-gear' | 'restaurant' | 'book' | 'place'
 
 export interface FavoriteItem {
   id: string
@@ -27,7 +23,8 @@ export const favorites: FavoriteItem[] = [
   {
     id: 'genelec-g2',
     name: 'Genelec G Two',
-    description: 'Compact active speaker with exceptional clarity and iconic Finnish design',
+    description:
+      'Compact active speaker with exceptional clarity and iconic Finnish design',
     category: 'tech-gear',
     coverImage: {
       light: '/favorites/genelec-g2-light.jpg',
@@ -38,7 +35,8 @@ export const favorites: FavoriteItem[] = [
   {
     id: 'airpods-pro',
     name: 'AirPods Pro 3',
-    description: 'Great noise cancellation and seamless Apple ecosystem integration',
+    description:
+      'Great noise cancellation and seamless Apple ecosystem integration',
     category: 'tech-gear',
     coverImage: {
       light: '/favorites/airpods-pro-light.svg',
