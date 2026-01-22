@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import {
   Check,
   X,
@@ -29,12 +29,13 @@ function generatePhoneNumber(): string {
 
 type Mode = 'phone' | 'place'
 type GameState = 'idle' | 'playing' | 'revealed'
+type LoadingState = 'idle' | 'fetching' | 'playing'
 
-async function speakWithGoogleTTS(
+async function fetchAudioFromTTS(
   text: string,
   mode: 'phone' | 'place',
   speed: number = 1.0
-): Promise<HTMLAudioElement> {
+): Promise<{ audio: HTMLAudioElement; url: string }> {
   const ssml = mode === 'phone' ? buildDigitSSML(text) : buildPlaceSSML(text)
 
   const response = await fetch('/api/tts-google', {
@@ -51,17 +52,24 @@ async function speakWithGoogleTTS(
   const audioUrl = URL.createObjectURL(audioBlob)
   const audio = new Audio(audioUrl)
 
-  return new Promise((resolve, reject) => {
-    audio.onended = () => {
-      URL.revokeObjectURL(audioUrl)
-      resolve(audio)
-    }
-    audio.onerror = () => {
-      URL.revokeObjectURL(audioUrl)
-      reject(new Error('Audio playback failed'))
-    }
-    audio.play()
-  })
+  return { audio, url: audioUrl }
+}
+
+function playAudio(
+  audio: HTMLAudioElement,
+  url: string,
+  onEnd: () => void,
+  onError: (error: Error) => void
+): void {
+  audio.onended = () => {
+    URL.revokeObjectURL(url)
+    onEnd()
+  }
+  audio.onerror = () => {
+    URL.revokeObjectURL(url)
+    onError(new Error('Audio playback failed'))
+  }
+  audio.play()
 }
 
 function formatPhoneNumber(num: string): string {
@@ -75,19 +83,55 @@ export default function PhoneNumberListeningPage() {
   const [generatedValue, setGeneratedValue] = useState<string | null>(null)
   const [userInput, setUserInput] = useState('')
   const [gameState, setGameState] = useState<GameState>('idle')
-  const [isLoading, setIsLoading] = useState(false)
+  const [loadingState, setLoadingState] = useState<LoadingState>('idle')
+  const [error, setError] = useState<string | null>(null)
   const [speed, setSpeed] = useState(1.0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUrlRef = useRef<string | null>(null)
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current)
+        audioUrlRef.current = null
+      }
+    }
+  }, [])
 
   const speakValue = useCallback(
     async (value: string, currentMode: Mode, currentSpeed: number) => {
-      setIsLoading(true)
+      setError(null)
+      setLoadingState('fetching')
       try {
-        await speakWithGoogleTTS(value, currentMode, currentSpeed)
-      } catch (error) {
-        console.error('Speech error:', error)
-      } finally {
-        setIsLoading(false)
+        const { audio, url } = await fetchAudioFromTTS(value, currentMode, currentSpeed)
+        audioRef.current = audio
+        audioUrlRef.current = url
+        setLoadingState('playing')
+        playAudio(
+          audio,
+          url,
+          () => {
+            setLoadingState('idle')
+            audioRef.current = null
+            audioUrlRef.current = null
+          },
+          (err) => {
+            setError(err.message)
+            setLoadingState('idle')
+            audioRef.current = null
+            audioUrlRef.current = null
+          }
+        )
+      } catch (err) {
+        console.error('Speech error:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load audio')
+        setLoadingState('idle')
       }
     },
     []
@@ -137,7 +181,7 @@ export default function PhoneNumberListeningPage() {
   }
 
   const handleReplay = () => {
-    if (!generatedValue || isLoading) return
+    if (!generatedValue || loadingState !== 'idle') return
     speakValue(generatedValue, mode, speed)
     inputRef.current?.focus()
   }
@@ -234,30 +278,25 @@ export default function PhoneNumberListeningPage() {
         </div>
 
         <div className='flex items-center gap-2'>
-          <Button onClick={handleStart} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className='size-4 animate-spin' />
-                Loading...
-              </>
-            ) : (
-              'Start'
-            )}
+          <Button onClick={handleStart} disabled={loadingState !== 'idle'}>
+            Start
           </Button>
 
           {(gameState === 'playing' || gameState === 'revealed') && (
             <Button
               variant='outline'
               onClick={handleReplay}
-              disabled={isLoading}
+              disabled={loadingState !== 'idle'}
             >
-              {isLoading ? (
-                <Loader2 className='size-4 animate-spin' />
-              ) : (
-                <Volume2 className='size-4' />
-              )}
               Replay
             </Button>
+          )}
+
+          {loadingState === 'fetching' && (
+            <Loader2 className='size-4 animate-spin text-muted-foreground' />
+          )}
+          {loadingState === 'playing' && (
+            <Volume2 className='size-4 text-muted-foreground' />
           )}
 
           <div className='ml-auto flex items-center gap-2'>
@@ -265,7 +304,7 @@ export default function PhoneNumberListeningPage() {
               variant='outline'
               size='icon'
               onClick={handleSpeedDown}
-              disabled={speed <= 0.5}
+              disabled={speed <= 0.5 || loadingState !== 'idle'}
             >
               <Minus className='size-4' />
             </Button>
@@ -274,7 +313,7 @@ export default function PhoneNumberListeningPage() {
               variant='outline'
               size='icon'
               onClick={handleSpeedUp}
-              disabled={speed >= 2.0}
+              disabled={speed >= 2.0 || loadingState !== 'idle'}
             >
               <Plus className='size-4' />
             </Button>
@@ -282,12 +321,16 @@ export default function PhoneNumberListeningPage() {
               variant='outline'
               size='icon'
               onClick={handleSpeedReset}
-              disabled={speed === 1.0}
+              disabled={speed === 1.0 || loadingState !== 'idle'}
             >
               <RotateCcw className='size-4' />
             </Button>
           </div>
         </div>
+
+        {error && (
+          <p className='text-sm text-red-500'>{error}</p>
+        )}
 
         <div className='flex items-center gap-4'>
           <div className='flex items-center gap-3'>
