@@ -22,9 +22,70 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+const siteUrl = 'https://willxuu.com'
+
 export const metadata: Metadata = {
-  title: 'Weiyi Xu',
-  description: "Weiyi's personal website",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Weiyi Xu - Frontend Developer',
+    template: '%s | Weiyi Xu',
+  },
+  description:
+    'Personal website of Weiyi Xu, a frontend developer at Xiaomi. Building mini tools and sharing code.',
+  keywords: [
+    'Weiyi Xu',
+    'frontend developer',
+    'web developer',
+    'React',
+    'Next.js',
+    'Xiaomi',
+  ],
+  authors: [{ name: 'Weiyi Xu', url: siteUrl }],
+  creator: 'Weiyi Xu',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName: 'Weiyi Xu',
+    title: 'Weiyi Xu - Frontend Developer',
+    description:
+      'Personal website of Weiyi Xu, a frontend developer at Xiaomi. Building mini tools and sharing code.',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Weiyi Xu - Frontend Developer',
+    description:
+      'Personal website of Weiyi Xu, a frontend developer at Xiaomi. Building mini tools and sharing code.',
+    creator: '@willxuu_',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Weiyi Xu',
+  url: siteUrl,
+  jobTitle: 'Frontend Developer',
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Xiaomi',
+    url: 'https://www.mi.com/global/',
+  },
+  sameAs: ['https://github.com/Johnson1602', 'https://x.com/willxuu_'],
 }
 
 export default function RootLayout({
@@ -34,6 +95,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
         suppressHydrationWarning

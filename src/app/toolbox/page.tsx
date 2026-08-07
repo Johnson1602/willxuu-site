@@ -1,5 +1,25 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Headphones, Link2 } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Toolbox',
+  description:
+    'A collection of mini tools built by Weiyi Xu. Includes dictation practice, sharable Cursor commands, and more.',
+  openGraph: {
+    title: 'Toolbox | Weiyi Xu',
+    description:
+      'A collection of mini tools built by Weiyi Xu. Includes dictation practice, sharable Cursor commands, and more.',
+  },
+  twitter: {
+    title: 'Toolbox | Weiyi Xu',
+    description:
+      'A collection of mini tools built by Weiyi Xu. Includes dictation practice, sharable Cursor commands, and more.',
+  },
+  alternates: {
+    canonical: '/toolbox',
+  },
+}
 
 const tools = [
   {
